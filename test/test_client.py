@@ -2,12 +2,15 @@ from unittest import TestCase
 import logging
 
 from mock import Mock, patch
+from ssl import SSLError, SSLEOFError
 
-from apns2.client import APNsClient, CONCURRENT_STREAMS_SAFETY_MAXIMUM
+from apns2.client import APNsClient, CONCURRENT_STREAMS_SAFETY_MAXIMUM, NotificationPriority, \
+    RequestStream
 from apns2.errors import ConnectionError
 from apns2.payload import Payload
 
 class ClientTestCase(TestCase):
+    # pylint:disable=protected-access
     @classmethod
     def setUpClass(cls):
         # Ignore all log messages so that test output is not cluttered.
@@ -96,3 +99,34 @@ class ClientTestCase(TestCase):
             self.client.connect()
         self.assertEqual(self.mock_connection.connect.call_count, 3)
     
+    def test_send_notification_to_token_catches_sslerror(self):
+        self.mock_connection.request.side_effect = SSLError
+        error, stream = self.client._safe_send_notification_to_token(
+            self.tokens[0],
+            self.notification,
+            self.topic,
+            NotificationPriority.Immediate
+        )
+        self.assertIsNone(stream)
+        self.assertEqual(error, "SSLError")
+        
+    def test_send_notification_to_token_does_not_catch_ssleoferror(self):
+        self.mock_connection.request.side_effect = SSLEOFError
+        with self.assertRaises(SSLEOFError):
+            self.client._safe_send_notification_to_token(
+                self.tokens[0],
+                self.notification,
+                self.topic,
+                NotificationPriority.Immediate
+            )
+
+    def test_send_notification_to_token_returns_stream_when_request_succeeds(self):
+        self.mock_connection.request.return_value = 1337        
+        error, stream = self.client._safe_send_notification_to_token(
+            self.tokens[0],
+            self.notification,
+            self.topic,
+            NotificationPriority.Immediate
+        )
+        self.assertIsNone(error)
+        self.assertEqual(stream, RequestStream(0, self.tokens[0]))

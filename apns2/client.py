@@ -2,6 +2,7 @@ import collections
 import json
 import logging
 from enum import Enum
+from ssl import SSLError, SSLEOFError
 
 from hyper import HTTP20Connection
 from hyper.tls import init_context
@@ -113,9 +114,16 @@ class APNsClient(object):
             # sent by the server at any time.
             self.update_max_concurrent_streams()
             if next_token and len(open_streams) < self._max_concurrent_streams:
-                logger.info('Sending to token %s', next_token)
-                stream_id = self.send_notification_async(next_token, notification, topic, priority)
-                open_streams.append(RequestStream(stream_id, next_token))
+                error, stream = self._safe_send_notification_to_token(
+                    next_token,
+                    notification,
+                    topic,
+                    priority
+                )
+                if stream is not None:
+                    open_streams.append(stream)
+                else:
+                    results[next_token] = error
 
                 try:
                     next_token = next(token_iterator)
@@ -181,3 +189,37 @@ class APNsClient(object):
                 )
         
         raise ConnectionError()
+        
+    def _safe_send_notification_to_token(
+        self,
+        token,
+        notification,
+        topic,
+        priority
+    ):
+        '''
+        Send a notification to a token as part of a batch. If sending succeeds, a RequestStream is
+        returned with the request stream id. Otherwise, if a non-fatal SSLError is encountered, the
+        error is returned. If a fatal SSLEOFError error is encountered, it is raised to fail the
+        whole batch.
+        
+        :return: a tuple (error, stream), where:
+            `error` is a string, or None if the request succeeded.
+            `stream` is a RequestStream, or None if the request failed.
+        
+        Note that SSLEOFError is considered a fatal error because of the following sentence in the
+        documentation: "Generally, you shouldn't try to reuse the underlying transport when this
+        error is encountered."
+        https://docs.python.org/3/library/ssl.html#ssl.SSLEOFError
+        '''
+        logger.info('Sending to token %s', token)
+        try:
+            stream_id = self.send_notification_async(token, notification, topic, priority)
+        except SSLEOFError as e:
+            logger.exception('Aborting batch due to fatal error while sending to token %s', token)
+            raise
+        except SSLError as e:
+            logger.exception('Error sending request for token %s', token)
+            return (type(e).__name__, None)
+        else:
+            return (None, RequestStream(stream_id, token))
