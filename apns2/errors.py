@@ -1,137 +1,159 @@
 class APNsException(Exception):
+    '''
+    A base class for all exceptions raised by PyAPNs2.
+    '''
     pass
 
 
 class InternalException(APNsException):
-    """This exception should not be raised. If it is, please report this as a bug."""
-    pass
+    '''
+    A base class for internal APNs exceptions which, if raised, can point to a bug in PyAPNs2.
+    '''
 
 
 class BadPayloadException(APNsException):
-    """Something bad with the payload."""
-    pass
+    '''
+    A base class for exceptions which signify an error in the notification payload.
+    '''
 
 
 class PayloadEmpty(BadPayloadException):
-    """The message payload was empty."""
-    pass
+    def __init__(self):
+        super(PayloadEmpty, self).__init__('The message payload was empty.')
 
 
 class PayloadTooLarge(BadPayloadException):
-    """The message payload was too large. The maximum payload size is 4096 bytes."""
-    pass
+    def __init__(self):
+        super(PayloadTooLarge, self).__init__(
+            'The message payload was too large. The maximum payload size is 4096 bytes.'
+        )
 
 
 class BadTopic(BadPayloadException):
-    """The apns-topic was invalid."""
-    pass
+    def __init__(self):
+        super(BadTopic, self).__init__('The apns-topic was invalid.')
 
 
 class TopicDisallowed(BadPayloadException):
-    """Pushing to this topic is not allowed."""
-    pass
+    def __init__(self):
+        super(TopicDisallowed, self).__init__('Pushing to this topic is not allowed.')
 
 
 class BadMessageId(InternalException):
-    """The apns-id value is bad."""
-    pass
+    def __init__(self):
+        super(BadMessageId, self).__init__('The apns-id value is bad.')
 
 
 class BadExpirationDate(BadPayloadException):
-    """The apns-expiration value is bad."""
-    pass
+    def __init__(self):
+        super(BadExpirationDate, self).__init__('The apns-expiration value is bad.')
 
 
 class BadPriority(InternalException):
-    """The apns-priority value is bad."""
-    pass
+    def __init__(self):
+        super(BadPriority, self).__init__('The apns-priority value is bad.')
 
 
 class MissingDeviceToken(APNsException):
-    """The device token is not specified in the request :path.
-    Verify that the :path header contains the device token."""
-    pass
+    def __init__(self):
+        super(MissingDeviceToken, self).__init__(
+            'The device token is not specified in the request :path. Verify that the :path header '
+            'contains the device token.'
+        )
 
 
 class BadDeviceToken(APNsException):
-    """The specified device token was bad.
-    Verify that the request contains a valid token and that the token matches the environment."""
-    pass
+    def __init__(self):
+        super(BadDeviceToken, self).__init__(
+            'The specified device token was bad. Verify that the request contains a valid token '
+            'and that the token matches the environment.'
+        )
 
 
 class DeviceTokenNotForTopic(APNsException):
-    """The device token does not match the specified topic."""
-
+    def __init__(self):
+        super(DeviceTokenNotForTopic, self).__init__(
+            'The device token does not match the specified topic.'
+        )
 
 class Unregistered(APNsException):
-    """The device token is inactive for the specified topic."""
+    def __init__(self):
+        super(Unregistered, self).__init__(
+            'The device token is inactive for the specified topic.'
+        )
 
 
 class DuplicateHeaders(InternalException):
-    """One or more headers were repeated."""
-    pass
+    def __init__(self):
+        super(DuplicateHeaders, self).__init__('One or more headers were repeated.')
 
 
 class BadCertificateEnvironment(APNsException):
-    """The client certificate was for the wrong environment."""
-    pass
+    def __init__(self):
+        super(BadCertificateEnvironment, self).__init__(
+            'The client certificate was for the wrong environment.'
+        )
 
 
 class BadCertificate(APNsException):
-    """The certificate was bad."""
-    pass
+    def __init__(self):
+        super(BadCertificate, self).__init__('The certificate was bad.')
 
 
 class Forbidden(APNsException):
-    """The specified action is not allowed."""
-    pass
+    def __init__(self):
+        super(Forbidden, self).__init__('The specified action is not allowed.')
 
 
 class BadPath(APNsException):
-    """The request contained a bad :path value."""
-    pass
+    def __init__(self):
+        super(BadPath, self).__init__('The request contained a bad :path value.')
 
 
 class MethodNotAllowed(InternalException):
-    """The specified :method was not POST."""
-    pass
+    def __init__(self):
+        super(MethodNotAllowed, self).__init__('The specified :method was not POST.')
 
 
 class TooManyRequests(APNsException):
-    """Too many requests were made consecutively to the same device token."""
-    pass
+    def __init__(self):
+        super(TooManyRequests, self).__init__(
+            'Too many requests were made consecutively to the same device token.'
+        )
 
 
 class IdleTimeout(APNsException):
-    """Idle time out."""
-    pass
+    def __init__(self):
+        super(IdleTimeout, self).__init__('Idle time out.')
 
 
 class Shutdown(APNsException):
-    """The server is shutting down."""
-    pass
+    def __init__(self):
+        super(Shutdown, self).__init__('The server is shutting down.')
 
 
 class InternalServerError(APNsException):
-    """An internal server error occurred."""
-    pass
+    def __init__(self):
+        super(InternalServerError, self).__init__('An internal server error occurred.')
 
 
 class ServiceUnavailable(APNsException):
-    """The service is unavailable."""
-    pass
+    def __init__(self):
+        super(ServiceUnavailable, self).__init__('The service is unavailable.')
 
 
 class MissingTopic(BadPayloadException):
-    """The apns-topic header of the request was not specified and was required.
-    The apns-topic header is mandatory when the client is connected using a certificate
-    that supports multiple topics."""
-    pass
-
+    def __init__(self):
+        super(MissingTopic, self).__init__(
+            'The apns-topic header of the request was not specified and was required. '
+            'The apns-topic header is mandatory when the client is connected using a certificate '
+            'that supports multiple topics.'
+        )
 
 
 class ConnectionError(APNsException):
-    """There was an error connecting to APNs."""
+    def __init__(self):
+        super(ConnectionError, self).__init__('There was an error connecting to APNs.')
 
 
 def exception_class_for_reason(reason):
